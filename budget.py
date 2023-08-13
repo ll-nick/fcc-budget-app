@@ -24,6 +24,9 @@ class Category:
     def get_balance(self):
         return sum(item["amount"] for item in self.ledger)
     
+    def get_spendings(self):
+        return sum(item["amount"] for item in self.ledger if item["amount"] < 0)
+    
     def check_funds(self, amount):
         if amount <= self.get_balance():
             return True
@@ -61,4 +64,50 @@ class Category:
     
 
 def create_spend_chart(categories):
-    pass
+    res = "Percentage spent by category\n"
+    columns = [create_column(category, percentage(category, categories)) for category in categories] 
+    y_axis = "".join([("  " + str(10 * y))[-3:] + "|\n" for y in range(10, -1, -1)])
+    columns.insert(0, y_axis)
+    extra_underline = " \n" * 11 + "-\n"
+    columns.append(extra_underline)
+    res += concat_columns(columns)
+    return remove_extra_lines_breaks(res)
+
+def percentage(category, categories):
+    total = sum([c.get_spendings() for c in categories])
+    return 100 * category.get_spendings() / total
+
+def create_column(category, percentage):
+    rounded_percentage = math.floor(percentage / 10) * 10
+    res = "".join(["   \n" for _ in range(100, rounded_percentage, -10)])
+    res += "".join(" o \n" for _ in range(rounded_percentage, -1, -10))
+    res += "---\n"
+    res += "".join([" " + l + " \n" for l in category.name])
+    
+    return res
+
+def concat_columns(columns):
+    columns = extend_columns(columns)
+    num_lines = len(columns[0].split("\n"))
+    res = ""
+    for line in range(num_lines):
+        for column in columns:
+            res += column.split("\n")[line]
+        res += "\n"
+
+    return res
+
+def extend_columns(columns):
+    max_num_lines = max([len(column.split("\n")) for column in columns])
+    for idx, column in enumerate(columns):
+        line_length = len(column.split("\n")[0])
+        while len(column.split("\n")) < max_num_lines:
+            column += line_length * " " + "\n"
+        columns[idx] = column
+
+    return columns
+
+def remove_extra_lines_breaks(s):
+    while s.endswith("\n"):
+        s = s[:-1]
+    return s
