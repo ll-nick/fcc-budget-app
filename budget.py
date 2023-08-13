@@ -27,5 +27,13 @@ class Category:
             return True
         return False
     
+    def transfer(self, amount, category):
+        if not self.check_funds(amount):
+            return False
+        
+        self.withdraw(amount, "Transfer to " + category.name)
+        category.deposit(amount, "Transfer from " + self.name)
+        return True
+    
 
 def create_spend_chart(categories):
